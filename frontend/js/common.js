@@ -1,4 +1,4 @@
-const API_BASE = `${window.location.protocol}//${window.location.host}`;
+const API = `${window.location.protocol}//${window.location.host}/api`;
 
 function getToken() {
     return localStorage.getItem('token');
@@ -22,9 +22,14 @@ async function request(url, options = {}) {
     if (token) {
         headers['x-token'] = token;
     }
-    const response = await fetch(API + url, {
-        ...options,
-        headers
-    });
-    return await response.json();
+    try {
+        const response = await fetch(API + url, {
+            ...options,
+            headers
+        });
+        return await response.json();
+    } catch (err) {
+        console.error("请求出错：", err);
+        return { code: 500, msg: "网络错误" };
+    }
 }
