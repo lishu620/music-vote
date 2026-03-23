@@ -13,7 +13,11 @@ app.use('/api/vote', require('./routes/vote'));
 
 app.get('/', (req, res) => res.send('API运行中'));
 
-const PORT = 3000;
-sequelize.sync({ force: true }).then(() => {
-  app.listen(PORT, () => console.log(`服务器已启动：${PORT}，数据库持久化已开启`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`端口：${PORT}`);
+});
+
+sequelize.sync({ force: false }).then(() => {
+  console.log('数据库已同步');
 });
