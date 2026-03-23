@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推荐歌曲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen flex items-center justify-center p-4" onload="loadEpisodes()">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-bold text-center text-emerald-600 mb-6">推荐歌曲</h2>
+        <select id="episodeId" class="w-full border border-gray-200 rounded-lg px-4 py-3 mb-3"></select>
+        <select id="type" class="w-full border border-gray-200 rounded-lg px-4 py-3 mb-3">
+            <option value="netease">网易云</option>
+            <option value="bilibili">B站BV号</option>
+        </select>
+        <input id="link" placeholder="链接/BV号" class="w-full border border-gray-200 rounded-lg px-4 py-3 mb-3">
+        <textarea id="reason" placeholder="推荐原因" rows="3" class="w-full border border-gray-200 rounded-lg px-4 py-3 mb-5"></textarea>
+        <button onclick="submitRecommend()" class="w-full bg-emerald-600 text-white py-3 rounded-lg">提交推荐</button>
+        <button onclick="location.href='index.html'" class="w-full mt-3 text-gray-500">返回</button>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script>
+        checkLogin();
+        if (getUser().role !== '文案') { alert('无权限'); location.href='index.html'; }
+        async function loadEpisodes() {
+            const list = await request('/episode/list');
+            const html = list.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            document.getElementById('episodeId').innerHTML = html;
+        }
+        async function submitRecommend() {
+            const episodeId = document.getElementById('episodeId').value;
+            const type = document.getElementById('type').value;
+            const link = document.getElementById('link').value;
+            const reason = document.getElementById('reason').value;
+            const res = await request('/recommend/add', { method: 'POST', body: JSON.stringify({ episodeId, type, link, reason }) });
+            alert(res.msg);
+            location.href = `episode.html?id=${episodeId}`;
+        }
+    </script>
+</body>
+</html>

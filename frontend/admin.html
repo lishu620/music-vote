@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建期次</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-bold text-center text-purple-600 mb-6">创建播客期次</h2>
+        <input id="name" placeholder="例如：第1期" class="w-full border border-gray-200 rounded-lg px-4 py-3 mb-5">
+        <button onclick="createEpisode()" class="w-full bg-purple-600 text-white py-3 rounded-lg">创建</button>
+        <button onclick="location.href='index.html'" class="w-full mt-3 text-gray-500">返回</button>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script>
+        checkLogin();
+        if (getUser().role !== '管理') { alert('无权限'); location.href='index.html'; }
+        async function createEpisode() {
+            const name = document.getElementById('name').value;
+            const res = await request('/episode/create', { method: 'POST', body: JSON.stringify({ name }) });
+            alert(res.msg);
+            location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

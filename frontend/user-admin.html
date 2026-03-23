@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-indigo-50 min-h-screen p-6">
+<div class="max-w-6xl mx-auto">
+    <div class="flex justify-between mb-4">
+        <h1 class="text-2xl font-bold">用户管理（仅管理员）</h1>
+        <div>
+            <button onclick="location.href='index.html'" class="bg-gray-600 text-white px-3 py-2 rounded">返回首页</button>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b">
+                    <th class="p-2 text-left">ID</th>
+                    <th class="p-2 text-left">用户名</th>
+                    <th class="p-2 text-left">昵称</th>
+                    <th class="p-2 text-left">角色</th>
+                    <th class="p-2 text-left">操作</th>
+                </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+    checkLogin();
+    const user = getUser();
+    if (user.role !== '管理') { alert('无权限'); location.href='index.html'; }
+
+    loadUsers();
+    async function loadUsers() {
+        const list = await request('/auth/all');
+        let html = '';
+        list.forEach(u => {
+            html += `
+            <tr class="border-b p-2">
+                <td class="p-2">${u.id}</td>
+                <td class="p-2">${u.username}</td>
+                <td class="p-2"><input id="nk_${u.id}" value="${u.nickname}" class="border p-1"></td>
+                <td class="p-2">
+                    <select id="role_${u.id}" class="border p-1">
+                        <option value="文案" ${u.role=='文案'?'selected':''}>文案</option>
+                        <option value="管理" ${u.role=='管理'?'selected':''}>管理</option>
+                        <option value="播音" ${u.role=='播音'?'selected':''}>播音</option>
+                        <option value="剪辑" ${u.role=='剪辑'?'selected':''}>剪辑</option>
+                        <option value="美术" ${u.role=='美术'?'selected':''}>美术</option>
+                        <option value="其他" ${u.role=='其他'?'selected':''}>其他</option>
+                    </select>
+                </td>
+                <td class="p-2 flex gap-2">
+                    <button onclick="update(${u.id})" class="bg-blue-600 text-white px-2 py-1 rounded">保存</button>
+                    <button onclick="resetPwd(${u.id})" class="bg-orange-600 text-white px-2 py-1 rounded">重置密码</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('userList').innerHTML = html;
+    }
+
+    async function update(id) {
+        const nickname = document.getElementById(`nk_${id}`).value;
+        const role = document.getElementById(`role_${id}`).value;
+        const res = await request('/auth/admin/update', {
+            method: 'POST', body: JSON.stringify({ id, nickname, role })
+        });
+        alert(res.msg);
+    }
+
+    async function resetPwd(id) {
+        if (!confirm('确定重置为 admin@123？')) return;
+        const res = await request('/auth/reset-pwd', {
+            method: 'POST', body: JSON.stringify({ id })
+        });
+        alert(res.msg);
+    }
+</script>
+</body>
+</html>

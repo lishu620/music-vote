@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 音乐推荐投票平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen p-4 md:p-8" onload="loadEpisodes()">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row justify-between items-center mb-6">
+            <div class="text-lg font-semibold text-indigo-600" id="userInfo"></div>
+            <div class="flex gap-2 mt-3 md:mt-0">
+                <button onclick="location.href='admin.html'" id="adminBtn" class="hidden bg-purple-600 text-white px-4 py-2 rounded-lg">管理后台</button>
+                <button onclick="location.href='recommend.html'" id="writeBtn" class="hidden bg-emerald-600 text-white px-4 py-2 rounded-lg">我要推荐</button>
+                <button onclick="location.href='profile.html'" class="bg-blue-600 text-white px-4 py-2 rounded-lg">个人中心</button>
+                <button onclick="location.href='user-admin.html'" id="userAdminBtn" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg">用户管理</button>
+                <button onclick="logout()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">退出</button>
+            </div>
+        </div>
+
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">🎵 播客期次列表</h1>
+        <div id="episodeList" class="grid gap-4 grid-cols-1 md:grid-cols-2"></div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script>
+        checkLogin();
+        const user = getUser();
+        document.getElementById('userInfo').innerText = `用户：${user.username} | 角色：${user.role}`;
+        if (user.role === '管理') document.getElementById('adminBtn').classList.remove('hidden');
+        if (user.role === '管理') document.getElementById('userAdminBtn').classList.remove('hidden');
+        if (user.role === '文案') document.getElementById('writeBtn').classList.remove('hidden');
+
+        async function loadEpisodes() {
+            const list = await request('/episode/list');
+            const html = list.map(e => `
+            <div class="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                <h3 class="text-xl font-bold text-gray-800">${e.name}</h3>
+                <button onclick="location.href='episode.html?id=${e.id}'" class="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg">进入播放 & 投票</button>
+            </div>
+            `).join('');
+            document.getElementById('episodeList').innerHTML = html;
+        }
+
+        function logout() { localStorage.clear(); location.href = 'login.html'; }
+    </script>
+</body>
+</html>
