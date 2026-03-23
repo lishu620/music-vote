@@ -5,6 +5,6 @@ services:
     build: .
     ports:
       - "7661:3000"
-    volumes:
-      - ./backend/database.sqlite:/app/backend/database.sqlite
     restart: always
+    working_dir: /app/backend
+    command: ["node", "app.js"]
