@@ -1,0 +1,15 @@
+# 依赖
+node_modules/
+npm-debug.log
+
+# 数据库
+database.sqlite
+database.sqlite-journal
+
+# 系统文件
+.DS_Store
+.idea/
+.vscode/
+
+# Docker
+docker-compose.override.yml
