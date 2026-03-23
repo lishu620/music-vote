@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API_BASE = `${window.location.protocol}//${window.location.host}`;
 
 function getToken() {
     return localStorage.getItem('token');
