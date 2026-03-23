@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/database');
 const app = express();
+const path = require('path');
 
 app.use(cors());
 app.use(express.json());
@@ -10,6 +11,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/episode', require('./routes/episode'));
 app.use('/api/recommend', require('./routes/recommend'));
 app.use('/api/vote', require('./routes/vote'));
+
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.get('/', (req, res) => res.send('API运行中'));
 
