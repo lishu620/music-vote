@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Comment = require('../models/Comment');
-const User = require('../models/User'); // 👈 这里修复正确了
+const User = require('../models/User');
+const Recommend = require('../models/Recommend'); // 👈 加
+const Episode = require('../models/Episode');     // 👈 加
 
-// 获取某首推荐的评论
+// 获取评论
 router.get('/list/:recommendId', async (req, res) => {
   try {
     const { recommendId } = req.params;
@@ -15,7 +17,7 @@ router.get('/list/:recommendId', async (req, res) => {
       order: [['id', 'DESC']],
       limit: parseInt(limit),
       offset: (page - 1) * limit,
-      raw: true  // 👈 关键修复
+      raw: true
     });
 
     res.json(list);
@@ -28,6 +30,15 @@ router.get('/list/:recommendId', async (req, res) => {
 router.post('/add', auth, async (req, res) => {
   try {
     const { recommendId, content } = req.body;
+    const rec = await Recommend.findByPk(recommendId);
+    const episode = await Episode.findByPk(rec.EpisodeId);
+
+    // ====================== 状态权限 ======================
+    if (episode.status === 'archive') {
+      return res.status(400).json({ msg: '已归档，不可评论' });
+    }
+    // =====================================================
+
     const user = await User.findByPk(req.user.id);
 
     await Comment.create({
@@ -48,13 +59,10 @@ router.post('/delete', auth, async (req, res) => {
   try {
     const { id } = req.body;
     const comment = await Comment.findByPk(id);
-
     if (!comment) return res.status(400).json({ msg: '不存在' });
-
     if (comment.UserId !== req.user.id && req.user.role !== '管理') {
       return res.status(403).json({ msg: '无权限' });
     }
-
     await comment.destroy();
     res.json({ msg: '删除成功' });
   } catch (err) {

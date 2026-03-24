@@ -4,18 +4,22 @@ const { auth } = require('../middleware/auth');
 const Vote = require('../models/Vote');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
+const Episode = require('../models/Episode'); // 👈 加这个
 
-// 投票接口（修改为：每首歌可投一次）
+// 投票接口
 router.post('/do', auth, async (req, res) => {
   try {
     const { episodeId, recommendId, num } = req.body;
 
-    // 🔥 关键修改：判断是否给【这首歌】投过，而不是本期
+    // ====================== 状态权限 ======================
+    const episode = await Episode.findByPk(episodeId);
+    if (episode.status === 'archive') {
+      return res.status(400).json({ msg: '已归档，不可投票' });
+    }
+    // =====================================================
+
     const voted = await Vote.findOne({
-      where: {
-        UserId: req.user.id,
-        RecommendId: recommendId // 只判断这首歌
-      }
+      where: { UserId: req.user.id, RecommendId: recommendId }
     });
     if (voted) {
       return res.status(400).json({ msg: '你已给该歌曲投过票' });
@@ -37,9 +41,7 @@ router.post('/do', auth, async (req, res) => {
     });
 
     const song = await Recommend.findByPk(recommendId);
-    await song.update({
-      voteCount: song.voteCount + num
-    });
+    await song.update({ voteCount: song.voteCount + num });
 
     res.json({ msg: '投票成功！' });
 

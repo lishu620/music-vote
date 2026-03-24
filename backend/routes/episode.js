@@ -18,4 +18,19 @@ router.get('/list', async (req, res) => {
   res.json(list);
 });
 
+// 管理员修改期次状态
+
+router.post('/status', auth, async (req, res) => {
+  try {
+    if (req.user.role !== '管理') {
+      return res.status(403).json({ msg: '无权限' });
+    }
+    const { id, status } = req.body;
+    await Episode.update({ status }, { where: { id } });
+    res.json({ msg: '状态已更新' });
+  } catch (err) {
+    res.status(500).json({ msg: '操作失败' });
+  }
+});
+
 module.exports = router;

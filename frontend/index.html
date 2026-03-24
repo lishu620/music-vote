@@ -34,13 +34,42 @@
 
         async function loadEpisodes() {
             const list = await request('/episode/list');
-            const html = list.map(e => `
-            <div class="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
-                <h3 class="text-xl font-bold text-gray-800">${e.name}</h3>
-                <button onclick="location.href='episode.html?id=${e.id}'" class="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg">进入播放 & 投票</button>
-            </div>
-            `).join('');
+            const html = list.map(e => {
+                let tag = '';
+                if(e.status === 'submit') tag = '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">文案提交</span>';
+                else if(e.status === 'vote') tag = '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">评论投票</span>';
+                else tag = '<span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">已归档</span>';
+
+                let adminBtns = '';
+                if(user.role === '管理') {
+                    adminBtns = `
+                    <div class="flex gap-1 mt-2">
+                        <button onclick="setStatus(${e.id},'submit')" class="text-xs px-2 py-1 border rounded">文案提交</button>
+                        <button onclick="setStatus(${e.id},'vote')" class="text-xs px-2 py-1 border rounded">评论投票</button>
+                        <button onclick="setStatus(${e.id},'archive')" class="text-xs px-2 py-1 border rounded">已归档</button>
+                    </div>`;
+                }
+
+                return `
+                <div class="bg-white rounded-xl shadow p-6 hover:shadow-md transition">
+                    <h3 class="text-xl font-bold text-gray-800">${e.name}</h3>
+                    <div class="my-2">${tag}</div>
+                    ${adminBtns}
+                    <button onclick="location.href='episode.html?id=${e.id}'" class="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg">进入播放 & 投票</button>
+                </div>`;
+            }).join('');
             document.getElementById('episodeList').innerHTML = html;
+        }
+
+        // 管理员修改状态
+        async function setStatus(id, status) {
+            if (!confirm('确定切换状态？')) return;
+            const res = await request('/episode/status', {
+                method: 'POST',
+                body: JSON.stringify({ id, status })
+            });
+            alert(res.msg);
+            loadEpisodes();
         }
 
         function logout() { localStorage.clear(); location.href = 'login.html'; }

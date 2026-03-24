@@ -4,21 +4,34 @@ const { auth, roleAllowed } = require('../middleware/auth');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
 const Vote = require('../models/Vote');
+const Episode = require('../models/Episode'); // 👈 我加了这个
 
-// 推荐歌曲（仅文案和管理）
+// 推荐歌曲（仅文案和管理 + 状态判断）
 router.post('/add', auth, roleAllowed(['文案', '管理']), async (req, res) => {
-  const { episodeId, type, link, reason } = req.body;
-  const user = await User.findByPk(req.user.id);
+  try {
+    const { episodeId, type, link, reason } = req.body;
 
-  const rec = await Recommend.create({
-    UserId: req.user.id,
-    EpisodeId: episodeId,
-    username: user.username,
-    nickname: user.nickname,
-    type, link, reason,
-    voteCount: 0
-  });
-  res.json({ msg: '推荐成功', rec });
+    // ====================== 状态权限控制 ======================
+    const episode = await Episode.findByPk(episodeId);
+    if (episode.status !== 'submit') {
+      return res.status(400).json({ msg: '当前已停止文案提交' });
+    }
+    // =========================================================
+
+    const user = await User.findByPk(req.user.id);
+
+    const rec = await Recommend.create({
+      UserId: req.user.id,
+      EpisodeId: episodeId,
+      username: user.username,
+      nickname: user.nickname,
+      type, link, reason,
+      voteCount: 0
+    });
+    res.json({ msg: '推荐成功', rec });
+  } catch (err) {
+    res.status(500).json({ msg: '提交失败' });
+  }
 });
 
 // 获取某一期推荐列表
@@ -30,7 +43,7 @@ router.get('/list/:episodeId', async (req, res) => {
   res.json(list);
 });
 
-// ==================== 新增：编辑推荐 ====================
+// ==================== 编辑推荐 ====================
 router.post('/edit', auth, async (req, res) => {
   try {
     const { id, type, link, reason } = req.body;
@@ -50,7 +63,7 @@ router.post('/edit', auth, async (req, res) => {
   }
 });
 
-// ==================== 新增：删除推荐 ====================
+// ==================== 删除推荐 ====================
 router.post('/delete', auth, async (req, res) => {
   try {
     const { id } = req.body;
