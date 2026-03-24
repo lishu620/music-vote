@@ -5,26 +5,27 @@ const Vote = require('../models/Vote');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
 
-// 投票接口
+// 投票接口（修改为：每首歌可投一次）
 router.post('/do', auth, async (req, res) => {
   try {
     const { episodeId, recommendId, num } = req.body;
 
+    // 🔥 关键修改：判断是否给【这首歌】投过，而不是本期
     const voted = await Vote.findOne({
       where: {
         UserId: req.user.id,
-        EpisodeId: episodeId
+        RecommendId: recommendId // 只判断这首歌
       }
     });
     if (voted) {
-      return res.status(400).json({ msg: '本期已投票，无法重复投' });
+      return res.status(400).json({ msg: '你已给该歌曲投过票' });
     }
 
     const user = await User.findByPk(req.user.id);
-
     const maxVote = user.role === '文案' ? 1 : 3;
+
     if (num < 1 || num > maxVote) {
-      return res.status(400).json({ msg: `本期最多投${maxVote}票` });
+      return res.status(400).json({ msg: `最多投${maxVote}票` });
     }
 
     await Vote.create({
