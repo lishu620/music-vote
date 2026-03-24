@@ -11,7 +11,7 @@
         <div class="bg-white rounded-xl shadow p-6 flex flex-col md:flex-row justify-between items-center mb-6">
             <div class="text-lg font-semibold text-indigo-600" id="userInfo"></div>
             <div class="flex gap-2 mt-3 md:mt-0">
-                <button onclick="location.href='admin.html'" id="adminBtn" class="hidden bg-purple-600 text-white px-4 py-2 rounded-lg">管理后台</button>
+                <button onclick="location.href='admin.html'" id="adminBtn" class="hidden bg-purple-600 text-white px-4 py-2 rounded-lg">创建播客</button>
                 <button onclick="location.href='recommend.html'" id="writeBtn" class="hidden bg-emerald-600 text-white px-4 py-2 rounded-lg">我要推荐</button>
                 <button onclick="location.href='profile.html'" class="bg-blue-600 text-white px-4 py-2 rounded-lg">个人中心</button>
                 <button onclick="location.href='user-admin.html'" id="userAdminBtn" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg">用户管理</button>
@@ -27,10 +27,10 @@
     <script>
         checkLogin();
         const user = getUser();
-        document.getElementById('userInfo').innerText = `用户：${user.username} | 角色：${user.role}`;
+        document.getElementById('userInfo').innerText = `您好：${user.nickname} | 角色：${user.role}`;
         if (user.role === '管理') document.getElementById('adminBtn').classList.remove('hidden');
         if (user.role === '管理') document.getElementById('userAdminBtn').classList.remove('hidden');
-        if (user.role === '文案') document.getElementById('writeBtn').classList.remove('hidden');
+        if (user.role === '管理' || user.role === '文案') document.getElementById('writeBtn').classList.remove('hidden');
 
         async function loadEpisodes() {
             const list = await request('/episode/list');

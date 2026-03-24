@@ -34,7 +34,7 @@
             return null;
         }
 
-        // 解析网易云链接（提取 song id）
+        // 解析网易云链接
         function parseNeteaseLink(link) {
             const idRegex = /song\?id=(\d+)/;
             const match = link.match(idRegex);
@@ -48,7 +48,6 @@
             const list = await request(`/recommend/list/${episodeId}`);
             let html = '';
 
-            // 先把所有歌曲的 HTML 拼好，不等待投票接口
             list.forEach(song => {
                 let player = '';
                 if (song.type === 'bilibili') {
@@ -113,7 +112,6 @@
 
             document.getElementById('songList').innerHTML = html;
 
-            // 再异步加载投票人信息，不阻塞页面渲染
             for (let song of list) {
                 const voteRes = await request(`/vote/list/${song.id}`);
                 let voteText = "暂无投票";

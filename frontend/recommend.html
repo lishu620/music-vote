@@ -23,7 +23,7 @@
     <script src="js/common.js"></script>
     <script>
         checkLogin();
-        if (getUser().role !== '文案') { alert('无权限'); location.href='index.html'; }
+        if (getUser().role !== '文案' && getUser().role !== '管理') { alert('无权限'); location.href='index.html'; }
         async function loadEpisodes() {
             const list = await request('/episode/list');
             const html = list.map(e => `<option value="${e.id}">${e.name}</option>`).join('');

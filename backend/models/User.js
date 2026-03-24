@@ -8,6 +8,11 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.ENUM('文案','管理','播音','剪辑','美术','其他'),
     allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'active'),
+    defaultValue: 'pending',
+    allowNull: false
   }
 });
 

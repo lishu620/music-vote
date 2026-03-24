@@ -1,11 +1,13 @@
+// 推荐歌曲接口
+
 const express = require('express');
 const router = express.Router();
 const { auth, roleAllowed } = require('../middleware/auth');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
 
-// 推荐歌曲（仅文案）
-router.post('/add', auth, roleAllowed(['文案']), async (req, res) => {
+// 推荐歌曲（仅文案和管理）
+router.post('/add', auth, roleAllowed(['文案', '管理']), async (req, res) => {
   const { episodeId, type, link, reason } = req.body;
 
   const user = await User.findByPk(req.user.id);
