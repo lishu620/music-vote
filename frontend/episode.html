@@ -177,7 +177,7 @@
 
             for (let song of list) {
                 try {
-                    // ✅ 正确
+                    
                     const voteRes = await request(`/vote/list/${song.id}`);
                     const txt = voteRes?.length ? voteRes.map(v => `${v.nickname}(${v.num}票)`).join(' • ') : '暂无投票';
                     const el = document.querySelector(`#vote_${song.id}`)?.closest('.flex')?.parentElement?.querySelector('.text-xs');
@@ -188,7 +188,7 @@
 
         async function doVote(recId) {
             const num = parseInt(document.getElementById(`vote_${recId}`).value);
-            // ✅ 正确
+            
             const res = await request('/vote/do', { 
                 method: 'POST', 
                 body: JSON.stringify({ episodeId, recommendId: recId, num }) 
@@ -209,7 +209,7 @@
             const type = document.getElementById('edit_type').value;
             const link = document.getElementById('edit_link').value;
             const reason = document.getElementById('edit_reason').value;
-            // ✅ 正确
+            
             const res = await request('/recommend/edit', { 
                 method: 'POST', 
                 body: JSON.stringify({ id: currentEditId, type, link, reason }) 
@@ -218,7 +218,7 @@
         }
         async function deleteRecommend(id) {
             if (!confirm('确定删除？')) return;
-            // ✅ 正确
+            
             const res = await request('/recommend/delete', { 
                 method: 'POST', 
                 body: JSON.stringify({ id }) 

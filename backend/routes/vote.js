@@ -4,19 +4,17 @@ const { auth } = require('../middleware/auth');
 const Vote = require('../models/Vote');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
-const Episode = require('../models/Episode'); // 👈 加这个
+const Episode = require('../models/Episode');
 
 // 投票接口
 router.post('/do', auth, async (req, res) => {
   try {
     const { episodeId, recommendId, num } = req.body;
 
-    // ====================== 状态权限 ======================
     const episode = await Episode.findByPk(episodeId);
     if (episode.status === 'archive') {
       return res.status(400).json({ msg: '已归档，不可投票' });
     }
-    // =====================================================
 
     const voted = await Vote.findOne({
       where: { UserId: req.user.id, RecommendId: recommendId }

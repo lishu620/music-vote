@@ -4,19 +4,17 @@ const { auth, roleAllowed } = require('../middleware/auth');
 const Recommend = require('../models/Recommend');
 const User = require('../models/User');
 const Vote = require('../models/Vote');
-const Episode = require('../models/Episode'); // 👈 我加了这个
+const Episode = require('../models/Episode');
 
 // 推荐歌曲（仅文案和管理 + 状态判断）
 router.post('/add', auth, roleAllowed(['文案', '管理']), async (req, res) => {
   try {
     const { episodeId, type, link, reason } = req.body;
 
-    // ====================== 状态权限控制 ======================
     const episode = await Episode.findByPk(episodeId);
     if (episode.status !== 'submit') {
       return res.status(400).json({ msg: '当前已停止文案提交' });
     }
-    // =========================================================
 
     const user = await User.findByPk(req.user.id);
 
@@ -43,7 +41,7 @@ router.get('/list/:episodeId', async (req, res) => {
   res.json(list);
 });
 
-// ==================== 编辑推荐 ====================
+// 编辑推荐
 router.post('/edit', auth, async (req, res) => {
   try {
     const { id, type, link, reason } = req.body;
@@ -51,7 +49,6 @@ router.post('/edit', auth, async (req, res) => {
 
     if (!rec) return res.status(400).json({ msg: '推荐不存在' });
 
-    // 权限：本人 或 管理员
     if (rec.UserId !== req.user.id && req.user.role !== '管理') {
       return res.status(403).json({ msg: '无权限' });
     }
@@ -63,7 +60,7 @@ router.post('/edit', auth, async (req, res) => {
   }
 });
 
-// ==================== 删除推荐 ====================
+// 删除推荐
 router.post('/delete', auth, async (req, res) => {
   try {
     const { id } = req.body;
@@ -75,9 +72,7 @@ router.post('/delete', auth, async (req, res) => {
       return res.status(403).json({ msg: '无权限' });
     }
 
-    // 删除关联投票
     await Vote.destroy({ where: { RecommendId: id } });
-    // 删除推荐
     await rec.destroy();
 
     res.json({ msg: '删除成功' });

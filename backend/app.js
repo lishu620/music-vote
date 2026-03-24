@@ -17,7 +17,6 @@ app.use('/api/comment', require('./routes/comment'));
 app.get('/', (req, res) => res.send('API运行中'));
 
 // 自动初始化管理员账号
-
 async function initAdmin() {
   try {
     const exists = await User.findOne({ where: { username: 'admin' } });

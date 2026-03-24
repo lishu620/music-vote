@@ -188,7 +188,6 @@ router.post('/update-nickname', auth, async (req, res) => {
 });
 
 // 管理员删除用户
-
 router.post('/admin/delete', auth, roleAllowed(['管理']), async (req, res) => {
   try {
     const { id } = req.body;

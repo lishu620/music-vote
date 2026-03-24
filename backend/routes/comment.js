@@ -3,8 +3,8 @@ const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Comment = require('../models/Comment');
 const User = require('../models/User');
-const Recommend = require('../models/Recommend'); // 👈 加
-const Episode = require('../models/Episode');     // 👈 加
+const Recommend = require('../models/Recommend');
+const Episode = require('../models/Episode');
 
 // 获取评论
 router.get('/list/:recommendId', async (req, res) => {
@@ -33,11 +33,9 @@ router.post('/add', auth, async (req, res) => {
     const rec = await Recommend.findByPk(recommendId);
     const episode = await Episode.findByPk(rec.EpisodeId);
 
-    // ====================== 状态权限 ======================
     if (episode.status === 'archive') {
       return res.status(400).json({ msg: '已归档，不可评论' });
     }
-    // =====================================================
 
     const user = await User.findByPk(req.user.id);
 
