@@ -13,6 +13,7 @@ app.use('/api/episode', require('./routes/episode'));
 app.use('/api/recommend', require('./routes/recommend'));
 app.use('/api/vote', require('./routes/vote'));
 app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/api/comment', require('./routes/comment'));
 app.get('/', (req, res) => res.send('API运行中'));
 
 // 自动初始化管理员账号

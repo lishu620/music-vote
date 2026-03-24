@@ -187,4 +187,23 @@ router.post('/update-nickname', auth, async (req, res) => {
   }
 });
 
+// 管理员删除用户
+
+router.post('/admin/delete', auth, roleAllowed(['管理']), async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (id == req.user.id) {
+      return res.status(400).json({ msg: '不能删除当前登录的账号' });
+    }
+
+    await User.destroy({ where: { id } });
+
+    res.json({ msg: '删除成功' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: '删除失败' });
+  }
+});
+
 module.exports = router;

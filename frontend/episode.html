@@ -9,14 +9,13 @@
 <body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen p-4 md:p-8" onload="loadData()">
     <div class="max-w-5xl mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">🎵 歌曲推荐 & 投票</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">🎵 歌曲推荐 & 投票 & 评论</h1>
             <button onclick="location.href='index.html'" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">返回期次</button>
         </div>
-
         <div id="songList" class="grid gap-6 grid-cols-1 lg:grid-cols-2"></div>
     </div>
 
-    <!-- 编辑推荐弹窗 -->
+    <!-- 编辑弹窗 -->
     <div id="editModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
         <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-lg">
             <h2 class="text-xl font-bold mb-4">编辑推荐</h2>
@@ -42,27 +41,74 @@
         const maxVote = user.role === '文案' ? 1 : 3;
         let currentEditId = null;
 
-        // 解析 B站链接/短链/BV号
         function parseBilibiliLink(link) {
             const bvRegex = /(BV[a-zA-Z0-9]+)|b23\.tv\/([a-zA-Z0-9]+)/;
             const match = link.match(bvRegex);
-            if (match) {
-                return match[1] || match[2];
-            }
-            return null;
+            return match ? (match[1] || match[2]) : null;
         }
 
-        // 解析网易云链接
         function parseNeteaseLink(link) {
-            const idRegex = /song\?id=(\d+)/;
-            const match = link.match(idRegex);
-            if (match) {
-                return match[1];
-            }
-            return null;
+            const match = link.match(/song\?id=(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        // ==============================
+        // ✅ 评论功能（绝对正确路径）
+        // ==============================
+        async function loadComments(recommendId) {
+            try {
+                const list = await request(`/comment/list/${recommendId}`);
+                const box = document.getElementById(`comments_${recommendId}`);
+                if (!box) return;
+
+                if (!list || list.length === 0) {
+                    box.innerHTML = '<div class="text-gray-400 text-sm">暂无评论</div>';
+                    return;
+                }
+
+                box.innerHTML = list.map(c => `
+                <div class="border-b border-gray-100 py-2 text-sm">
+                    <div class="flex justify-between items-start">
+                        <span class="text-indigo-600 font-medium">${c.nickname}</span>
+                        ${c.UserId === user.id || user.role === '管理'
+                            ? `<button onclick="deleteComment(${c.id},${recommendId})" class="text-red-500 text-xs">删除</button>`
+                            : ''}
+                    </div>
+                    <div class="text-gray-700 mt-1">${c.content}</div>
+                </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        async function postComment(recommendId) {
+            const input = document.getElementById(`commentInput_${recommendId}`);
+            const content = input.value.trim();
+            if (!content) return alert('请输入评论');
+            try {
+                const res = await request('/comment/add', {
+                    method: 'POST',
+                    body: JSON.stringify({ recommendId, content })
+                });
+                alert(res.msg);
+                input.value = '';
+                loadComments(recommendId);
+            } catch (e) {}
+        }
+
+        async function deleteComment(id, recommendId) {
+            if (!confirm('确定删除这条评论？')) return;
+            try {
+                const res = await request('/comment/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ id })
+                });
+                alert(res.msg);
+                loadComments(recommendId);
+            } catch (e) {}
         }
 
         async function loadData() {
+            // ✅ 绝对正确
             const list = await request(`/recommend/list/${episodeId}`);
             let html = '';
 
@@ -70,36 +116,16 @@
                 let player = '';
                 if (song.type === 'bilibili') {
                     const bv = parseBilibiliLink(song.link);
-                    if (bv) {
-                        player = `
-                        <iframe 
-                            src="https://player.bilibili.com/player.html?bvid=${bv}&autoplay=0" 
-                            width="100%" 
-                            height="220" 
-                            frameborder="no" 
-                            scrolling="no" 
-                            allowfullscreen>
-                        </iframe>`;
-                    } else {
-                        player = `<div class="text-red-500 p-3">无法解析 B站 链接</div>`;
-                    }
+                    player = bv
+                        ? `<iframe src="https://player.bilibili.com/player.html?bvid=${bv}&autoplay=0" width="100%" height="220" frameborder="no"></iframe>`
+                        : `<div class="text-red-500 p-3">无法解析</div>`;
                 } else if (song.type === 'netease') {
-                    const songId = parseNeteaseLink(song.link);
-                    if (songId) {
-                        player = `
-                        <iframe 
-                            src="https://music.163.com/outchain/player?type=2&id=${songId}&auto=0&height=100" 
-                            width="100%" 
-                            height="100" 
-                            frameborder="no" 
-                            scrolling="no">
-                        </iframe>`;
-                    } else {
-                        player = `<div class="text-red-500 p-3">无法解析 网易云 链接</div>`;
-                    }
+                    const sid = parseNeteaseLink(song.link);
+                    player = sid
+                        ? `<iframe src="https://music.163.com/outchain/player?type=2&id=${sid}&auto=0&height=100" width="100%" height="100" frameborder="no"></iframe>`
+                        : `<div class="text-red-500 p-3">无法解析</div>`;
                 }
 
-                // 编辑/删除按钮（仅作者或管理员可见）
                 let editBtn = '';
                 if (song.UserId === user.id || user.role === '管理') {
                     editBtn = `
@@ -113,58 +139,64 @@
                 <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition">
                     <div class="mb-3 flex items-center gap-2">
                         <span class="text-sm text-white bg-purple-500 px-2 py-1 rounded">票数：${song.voteCount}</span>
-                        <span class="text-sm text-gray-500">推荐人：${song.nickname || song.UserId}</span>
+                        <span class="text-sm text-gray-500">推荐人：${song.nickname}</span>
                     </div>
                     ${editBtn}
-                    <div class="text-xs text-gray-500 mb-3">
-                        投票成员：加载中...
-                    </div>
+                    <div class="text-xs text-gray-500 mb-3">投票成员：加载中...</div>
                     <div class="my-4 rounded-lg overflow-hidden bg-gray-50">${player}</div>
-                    <div class="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg mb-4">
-                        ${song.reason}
-                    </div>
-                    <div class="flex gap-2 items-center">
+                    <div class="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg mb-4">${song.reason}</div>
+
+                    <div class="flex gap-2 items-center mb-6">
                         <select id="vote_${song.id}" class="border rounded-lg px-3 py-2 flex-1">
                             ${maxVote === 1
-                                ? `<option value="1">投 1 票</option>` 
-                                : `
-                                    <option value="1">投 1 票</option>
-                                    <option value="2">投 2 票</option>
-                                    <option value="3">投 3 票</option>
-                                    `
+                                ? `<option value="1">投 1 票</option>`
+                                : `<option value="1">1票</option><option value="2">2票</option><option value="3">3票</option>`
                             }
                         </select>
-                        <button onclick="doVote(${song.id})" class="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600">投票</button>
+                        <button onclick="doVote(${song.id})" class="bg-rose-500 text-white px-4 py-2 rounded-lg">投票</button>
+                    </div>
+
+                    <!-- 评论区 -->
+                    <div class="border-t pt-4 mt-4">
+                        <div class="font-semibold text-gray-700 mb-2">💬 评论</div>
+                        <div id="comments_${song.id}" class="max-h-60 overflow-y-auto mb-3 text-sm"></div>
+                        <div class="flex gap-2">
+                            <input id="commentInput_${song.id}" placeholder="输入评论…" class="flex-1 border rounded px-3 py-2 text-sm">
+                            <button onclick="postComment(${song.id})" class="bg-indigo-600 text-white px-3 py-2 rounded text-sm">发送</button>
+                        </div>
                     </div>
                 </div>`;
             });
 
             document.getElementById('songList').innerHTML = html;
 
+            // 加载评论
+            for (let s of list) {
+                loadComments(s.id);
+            }
+
             for (let song of list) {
                 try {
+                    // ✅ 正确
                     const voteRes = await request(`/vote/list/${song.id}`);
-                    let voteText = "暂无投票";
-                    if (voteRes && voteRes.length > 0) {
-                        voteText = voteRes.map(v => `${v.nickname}(${v.num}票)`).join(" • ");
-                    }
+                    const txt = voteRes?.length ? voteRes.map(v => `${v.nickname}(${v.num}票)`).join(' • ') : '暂无投票';
                     const el = document.querySelector(`#vote_${song.id}`)?.closest('.flex')?.parentElement?.querySelector('.text-xs');
-                    if (el) el.innerText = `投票成员：${voteText}`;
-                } catch (e) {}
+                    if (el) el.innerText = `投票成员：${txt}`;
+                } catch(e){}
             }
         }
 
         async function doVote(recId) {
             const num = parseInt(document.getElementById(`vote_${recId}`).value);
-            const res = await request('/vote/do', {
-                method: 'POST',
-                body: JSON.stringify({ episodeId, recommendId: recId, num })
+            // ✅ 正确
+            const res = await request('/vote/do', { 
+                method: 'POST', 
+                body: JSON.stringify({ episodeId, recommendId: recId, num }) 
             });
             alert(res.msg);
             if (res.msg.includes('成功')) location.reload();
         }
 
-        // 编辑功能
         function openEditModal(id, type, link, reason) {
             currentEditId = id;
             document.getElementById('edit_type').value = type;
@@ -172,35 +204,26 @@
             document.getElementById('edit_reason').value = reason;
             document.getElementById('editModal').classList.remove('hidden');
         }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-
+        function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
         async function saveEdit() {
             const type = document.getElementById('edit_type').value;
             const link = document.getElementById('edit_link').value;
             const reason = document.getElementById('edit_reason').value;
-
-            const res = await request('/recommend/edit', {
-                method: 'POST',
-                body: JSON.stringify({ id: currentEditId, type, link, reason })
+            // ✅ 正确
+            const res = await request('/recommend/edit', { 
+                method: 'POST', 
+                body: JSON.stringify({ id: currentEditId, type, link, reason }) 
             });
-
-            alert(res.msg);
-            closeEditModal();
-            location.reload();
+            alert(res.msg); closeEditModal(); location.reload();
         }
-
-        // 删除功能
         async function deleteRecommend(id) {
-            if (!confirm('确定删除该推荐？关联投票也会删除')) return;
-            const res = await request('/recommend/delete', {
-                method: 'POST',
-                body: JSON.stringify({ id })
+            if (!confirm('确定删除？')) return;
+            // ✅ 正确
+            const res = await request('/recommend/delete', { 
+                method: 'POST', 
+                body: JSON.stringify({ id }) 
             });
-            alert(res.msg);
-            location.reload();
+            alert(res.msg); location.reload();
         }
     </script>
 </body>
